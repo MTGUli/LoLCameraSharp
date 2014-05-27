@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-
+using System.Diagnostics;
 using LoLCameraSharp.MemoryFunctions;
 
 namespace LoLCameraSharp
@@ -26,6 +26,8 @@ namespace LoLCameraSharp
         IntPtr YPositionAddress;
 
         //Timer Ticks:
+        Timer UpdateCamera = new Timer();
+        Timer SearchForGame = new Timer();
 
         //General Global Vars
         bool PatternsFound = false;
@@ -35,7 +37,7 @@ namespace LoLCameraSharp
             InitializeComponent();
         }
 
-        private void FindGameTick()
+        private void FindGameTick(object sender, EventArgs e)
         {
             if (m.gameFound)
             {
@@ -48,6 +50,33 @@ namespace LoLCameraSharp
                 if (m.FindGame("League of Legends"))
                     PatternsFound = GetCameraOffsets();
             }
+
+            if (m.gameFound && PatternsFound)
+            {
+                UpdateCamera.Enabled = true;
+                SearchForGame.Enabled = false;
+            }
+        }
+
+        private void UpdateCameraTick(object sender, EventArgs e)
+        {
+            if (m.gameFound)
+            {
+                if(tabControlView.SelectedTab == tabDefault)
+                    addressView.Lines = DisplayAddresses();
+
+                HandleCamera(0.0f);
+            }
+            else
+            {
+                addressView.Clear();
+                UpdateCamera.Enabled = false;
+                SearchForGame.Enabled = true;
+            }
+        }
+
+        private void HandleCamera(float deltaTime)
+        {
         }
 
         private bool GetCameraOffsets()
@@ -71,8 +100,8 @@ namespace LoLCameraSharp
                     return false; //Pointer hasn't been setup yet
 
                 FoVAddress = (IntPtr)(pointerAddr + 0x130);
-                PitchAddress = (IntPtr)(pointerAddr + 0x124);
-                YawAddress = (IntPtr)(pointerAddr + 0x120);
+                YawAddress = (IntPtr)(pointerAddr + 0x124);
+                PitchAddress = (IntPtr)(pointerAddr + 0x120);
                 YPositionAddress = (IntPtr)(pointerAddr + 0x10C);
                 XPositionAddress = (IntPtr)(pointerAddr + 0x104);
 
@@ -102,9 +131,15 @@ namespace LoLCameraSharp
             return AddressDisplay.ToArray();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void LoLCamera_Load(object sender, EventArgs e)
         {
-            FindGameTick();
+            //Search for game every second
+            SearchForGame.Interval = 1000;
+            SearchForGame.Tick += new EventHandler(this.FindGameTick);
+            SearchForGame.Enabled = true;
+
+            UpdateCamera.Interval = 1;
+            UpdateCamera.Tick += new EventHandler(this.UpdateCameraTick);
         }
     }
 }

@@ -54,16 +54,23 @@ namespace LoLCameraSharp.MemoryFunctions
         #region Find Game Funcs
         public bool FindGame(string gameName)
         {
-            Process[] processes = Process.GetProcessesByName(gameName);
-            _gameFound = false;
-            if (processes.Count() != 0)
+            try
             {
-                this._processHandle = OpenProcess(PROCESS_WM_READ, false, processes[0].Id);
-                this._baseModule = processes[0].MainModule.BaseAddress;
-                this._moduleSize = processes[0].MainModule.ModuleMemorySize;
-                _gameFound = true;
+                Process[] processes = Process.GetProcessesByName(gameName);
+                _gameFound = false;
+                if (processes.Count() != 0)
+                {
+                    this._processHandle = OpenProcess(PROCESS_WM_READ, false, processes[0].Id);
+                    this._baseModule = processes[0].MainModule.BaseAddress;
+                    this._moduleSize = processes[0].MainModule.ModuleMemorySize;
+                    _gameFound = true;
+                }
+                return _gameFound;
             }
-            return _gameFound;
+            catch
+            {
+                return false;
+            }
         }
         #endregion
 
