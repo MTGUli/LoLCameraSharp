@@ -9,10 +9,13 @@ namespace LoLCameraSharp.MemoryFunctions
 {
     public class MemoryEditor
     {
+        #region Process Access Consts
         const int PROCESS_WM_READ = 0x0010;
         const int PROCESS_VM_WRITE = 0x0020;
         const int PROCESS_VM_OPERATION = 0x0008;
+        #endregion
 
+        #region Imports
         [DllImport("kernel32.dll")]
         public static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
 
@@ -23,8 +26,10 @@ namespace LoLCameraSharp.MemoryFunctions
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool WriteProcessMemory(int hProcess, int lpBaseAddress,
           byte[] lpBuffer, int dwSize, ref int lpNumberOfBytesWritten);
+        #endregion
 
-        public bool gameFound { get { return _gameFound; } }
+        #region Public & Private Vars
+        public bool gameFound { get { return _gameFound; } set { _gameFound = value; } }
         public IntPtr processHandler { get { return _processHandle; } }
         public IntPtr baseModule { get { return _baseModule; } }
         public int moduleSize { get { return _moduleSize; } }
@@ -33,10 +38,24 @@ namespace LoLCameraSharp.MemoryFunctions
         private IntPtr _processHandle;
         private IntPtr _baseModule;
         private int _moduleSize;
+        #endregion
+
+        #region Constructors
+        public MemoryEditor()
+        {
+        }
 
         public MemoryEditor(string gameName)
         {
+            FindGame(gameName);
+        }
+        #endregion
+
+        #region Find Game Funcs
+        public bool FindGame(string gameName)
+        {
             Process[] processes = Process.GetProcessesByName(gameName);
+            _gameFound = false;
             if (processes.Count() != 0)
             {
                 this._processHandle = OpenProcess(PROCESS_WM_READ, false, processes[0].Id);
@@ -44,12 +63,11 @@ namespace LoLCameraSharp.MemoryFunctions
                 this._moduleSize = processes[0].MainModule.ModuleMemorySize;
                 _gameFound = true;
             }
-            else
-            {
-                _gameFound = false;
-            }
+            return _gameFound;
         }
+        #endregion
 
+        #region ReadMemory Funcs
         public Int32 ReadInt(IntPtr address)
         {
             return BitConverter.ToInt32(ReadBytes(address, sizeof(Int32)), 0);
@@ -72,7 +90,9 @@ namespace LoLCameraSharp.MemoryFunctions
             _gameFound = ReadProcessMemory((int)_processHandle, (int)address, buffer, buffer.Length, ref bytesRead);
             return buffer;
         }
+        #endregion
 
+        #region WriteMemory Funcs
         public void WriteFloat(IntPtr address, float value)
         {
             WriteBytes(address, BitConverter.GetBytes(value));
@@ -83,5 +103,6 @@ namespace LoLCameraSharp.MemoryFunctions
             int bytesWritten = 0;
             _gameFound = WriteProcessMemory((int)_processHandle, (int)address, buffer, buffer.Length, ref bytesWritten);
         }
+        #endregion
     }
 }
