@@ -24,6 +24,8 @@ namespace LoLCameraSharp
         IntPtr FoVAddress;
         IntPtr XPositionAddress;
         IntPtr YPositionAddress;
+        IntPtr ZoomAddress;
+        IntPtr ViewDistanceAddress;
 
         //Timer Ticks:
         Timer UpdateCamera = new Timer();
@@ -62,7 +64,7 @@ namespace LoLCameraSharp
         {
             if (m.gameFound)
             {
-                if(tabControlView.SelectedTab == tabDefault)
+                if (tabControlView.SelectedTab == tabDebug)
                     addressView.Lines = DisplayAddresses();
 
                 HandleCamera(0.0f);
@@ -104,6 +106,7 @@ namespace LoLCameraSharp
                 PitchAddress = (IntPtr)(pointerAddr + 0x120);
                 YPositionAddress = (IntPtr)(pointerAddr + 0x10C);
                 XPositionAddress = (IntPtr)(pointerAddr + 0x104);
+                ZoomAddress = (IntPtr)(pointerAddr + 0x1BC);
 
                 patternAddr = p.FindPattern("\\xC7\\x87\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\xE8\\x00\\x00\\x00\\x00\\x8B\\x87\\x00\\x00\\x00\\x00\\x8D\\x8F\\x00\\x00\\x00\\x00\\x89\\x45\\xCC", "xx????????x????xx????xx????xxx", ref m);
                 
@@ -111,6 +114,16 @@ namespace LoLCameraSharp
                     return false; //Pattern is out of date
 
                 YHeightAddress = (IntPtr)(patternAddr + 0x06);
+
+                patternAddr = p.FindPattern("\\xF3\\x0F\\x58\\x15\\x00\\x00\\x00\\x00\\xF3\\x0F\\x11\\x45\\xB8", "xxxx????xxxxx", ref m);
+
+                if (patternAddr == 0)
+                    return false; //Pattern is out of date
+
+                patternAddr += 0x4;
+                pointerAddr = m.ReadUInt((IntPtr)patternAddr);
+
+                ViewDistanceAddress = (IntPtr)(pointerAddr + 0x10);
 
                 addressView.Lines = DisplayAddresses();
                 return true;
@@ -127,6 +140,9 @@ namespace LoLCameraSharp
             AddressDisplay.Add(string.Concat(new object[] { "X Position Address: ", XPositionAddress.ToString("X"), ",  Y Position Address: ", YPositionAddress.ToString("X") }));
             AddressDisplay.Add(string.Concat(new object[] { "X: ", m.ReadFloat(XPositionAddress).ToString(), ",  Y: ", m.ReadFloat(YPositionAddress).ToString() }));
             AddressDisplay.Add(string.Concat(new object[] { "Camera Height Address: ", YHeightAddress.ToString("X"), ",  FoV Address: ", FoVAddress.ToString("X") }));
+            AddressDisplay.Add(string.Concat(new object[] { "Camera Height: ", m.ReadFloat(YHeightAddress).ToString(), ",  Field of View: ", m.ReadFloat(FoVAddress).ToString() }));
+            AddressDisplay.Add(string.Concat(new object[] { "Zoom Address: ", ZoomAddress.ToString("X"), ",  Value: ", m.ReadFloat(ZoomAddress).ToString() }));
+            AddressDisplay.Add(string.Concat(new object[] { "View Distance Address: ", ViewDistanceAddress.ToString("X"), ",  Value: ", m.ReadFloat(ViewDistanceAddress).ToString() }));
 
             return AddressDisplay.ToArray();
         }
