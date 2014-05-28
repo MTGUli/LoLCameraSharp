@@ -9,6 +9,8 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using LoLCameraSharp.MemoryFunctions;
 
+using LoLCameraSharp.Keyboard;
+
 namespace LoLCameraSharp
 {
     public partial class LoLCamera : Form
@@ -33,7 +35,7 @@ namespace LoLCameraSharp
 
         //General Global Vars
         bool PatternsFound = false;
-        Stopwatch timer = new Stopwatch();
+        Stopwatch deltaTime = new Stopwatch();
 
         public LoLCamera()
         {
@@ -57,7 +59,7 @@ namespace LoLCameraSharp
             if (m.gameFound && PatternsFound)
             {
                 SearchForGame.Enabled = false;
-                timer.Restart();
+                deltaTime.Restart();
                 UpdateCamera.Enabled = true;
             }
         }
@@ -69,8 +71,9 @@ namespace LoLCameraSharp
                 if (tabControlView.SelectedTab == tabDebug)
                     addressView.Lines = DisplayAddresses();
 
-                HandleCamera((float)(timer.Elapsed.TotalMilliseconds / 1000f));
-                timer.Restart();
+                float dt = (float)(deltaTime.Elapsed.TotalMilliseconds / 1000f);
+                deltaTime.Restart();
+                HandleCamera(dt);  
             }
             else
             {
@@ -82,6 +85,7 @@ namespace LoLCameraSharp
 
         private void HandleCamera(float deltaTime)
         {
+            // Check Hotkeys for key presses and adjust camera accordingly, get mouse location etc!
         }
 
         private bool GetCameraOffsets()
@@ -159,6 +163,25 @@ namespace LoLCameraSharp
 
             UpdateCamera.Interval = 1;
             UpdateCamera.Tick += new EventHandler(this.UpdateCameraTick);
+        }
+
+        //Hotkey Handling:
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            HotkeyBinding form = new HotkeyBinding(this);
+            form.Visible = true;
+            this.Visible = false;
+        }
+
+        public void ProcessHotkey(Hotkeys hotkey, HotkeyBinding form)
+        {
+            form.Close();
+            this.Visible = true;
+        }
+        public void CancelHotkey(HotkeyBinding form)
+        {
+            form.Close();
+            this.Visible = true;
         }
     }
 }

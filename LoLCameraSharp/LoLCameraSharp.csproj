@@ -49,6 +49,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Keyboard\HotkeyBinding.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Keyboard\HotkeyBinding.Designer.cs">
+      <DependentUpon>HotkeyBinding.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Keyboard\Hotkeys.cs" />
     <Compile Include="LoLCamera.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -59,6 +66,9 @@
     <Compile Include="MemoryFunctions\Memory.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Keyboard\HotkeyBinding.resx">
+      <DependentUpon>HotkeyBinding.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="LoLCamera.resx">
       <DependentUpon>LoLCamera.cs</DependentUpon>
     </EmbeddedResource>
