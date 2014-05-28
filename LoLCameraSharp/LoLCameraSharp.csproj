@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InIHandler\IniParser.cs" />
     <Compile Include="Keyboard\HotkeyBinding.cs">
       <SubType>Form</SubType>
     </Compile>

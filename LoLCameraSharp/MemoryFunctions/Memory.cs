@@ -60,7 +60,7 @@ namespace LoLCameraSharp.MemoryFunctions
                 _gameFound = false;
                 if (processes.Count() != 0)
                 {
-                    this._processHandle = OpenProcess(PROCESS_WM_READ, false, processes[0].Id);
+                    this._processHandle = OpenProcess(PROCESS_WM_READ | PROCESS_VM_OPERATION | PROCESS_VM_WRITE, false, processes[0].Id);
                     this._baseModule = processes[0].MainModule.BaseAddress;
                     this._moduleSize = processes[0].MainModule.ModuleMemorySize;
                     _gameFound = true;

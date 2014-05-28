@@ -7,8 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
-using LoLCameraSharp.MemoryFunctions;
+using System.IO;
 
+using LoLCameraSharp.MemoryFunctions;
+using LoLCameraSharp.IniHandler;
 using LoLCameraSharp.Keyboard;
 
 namespace LoLCameraSharp
@@ -22,12 +24,12 @@ namespace LoLCameraSharp
         //Address Cache:
         IntPtr YawAddress;
         IntPtr PitchAddress;
-        IntPtr YHeightAddress;
+        IntPtr CameraHeightAddress;
         IntPtr FoVAddress;
         IntPtr XPositionAddress;
         IntPtr YPositionAddress;
         IntPtr ZoomAddress;
-        IntPtr ViewDistanceAddress;
+        IntPtr DrawDistanceAddress;
 
         //Timer Ticks:
         Timer UpdateCamera = new Timer();
@@ -35,7 +37,13 @@ namespace LoLCameraSharp
 
         //General Global Vars
         bool PatternsFound = false;
+        float defaultPitch, pitch = 0f;
+        float defaultYaw, yaw = 0f;
+        float defaultCameraHeight, cameraHeight = 0f;
+        float defaultDrawDistance, drawDistance = 0f;
+        float speed = 25.0f;
         Stopwatch deltaTime = new Stopwatch();
+        string IniFile;
 
         public LoLCamera()
         {
@@ -58,6 +66,7 @@ namespace LoLCameraSharp
 
             if (m.gameFound && PatternsFound)
             {
+                GetDefaultValues();
                 SearchForGame.Enabled = false;
                 deltaTime.Restart();
                 UpdateCamera.Enabled = true;
@@ -86,6 +95,57 @@ namespace LoLCameraSharp
         private void HandleCamera(float deltaTime)
         {
             // Check Hotkeys for key presses and adjust camera accordingly, get mouse location etc!
+            if (((Hotkeys)pitchIncreaseHotkey.Tag).IsTriggered())
+            {
+                pitch += speed * deltaTime;
+                m.WriteFloat(PitchAddress, pitch);
+            }
+            else if (((Hotkeys)pitchDecreaseHotkey.Tag).IsTriggered())
+            {
+                pitch -= speed * deltaTime;
+                m.WriteFloat(PitchAddress, pitch);
+            }
+
+            if (((Hotkeys)yawIncreaseHotkey.Tag).IsTriggered())
+            {
+                yaw += speed * deltaTime;
+                m.WriteFloat(YawAddress, yaw);
+            }
+            else if (((Hotkeys)yawDecreaseHotkey.Tag).IsTriggered())
+            {
+                yaw -= speed * deltaTime;
+                m.WriteFloat(YawAddress, yaw);
+            }
+
+            if (((Hotkeys)cameraHeightIncreaseHotkey.Tag).IsTriggered())
+            {
+                cameraHeight += speed * deltaTime;
+                m.WriteFloat(CameraHeightAddress, cameraHeight);
+            }
+            else if (((Hotkeys)cameraHeightDecreaseHotkey.Tag).IsTriggered())
+            {
+                cameraHeight -= speed * deltaTime;
+                m.WriteFloat(CameraHeightAddress, cameraHeight);
+            }
+
+            if (((Hotkeys)drawDistanceIncreaseHotkey.Tag).IsTriggered())
+            {
+                drawDistance += 15.0f * speed * deltaTime;
+                m.WriteFloat(DrawDistanceAddress, drawDistance);
+            }
+            else if (((Hotkeys)drawDistanceDecreaseHotkey.Tag).IsTriggered())
+            {
+                drawDistance -= 15.0f * speed * deltaTime;
+                m.WriteFloat(DrawDistanceAddress, drawDistance);
+            }
+
+            if (((Hotkeys)speedIncreaseHotkey.Tag).IsTriggered())
+                speed += 0.1f;
+            else if (((Hotkeys)speedDecreaseHotkey.Tag).IsTriggered())
+                speed -= 0.1f;
+
+            if (((Hotkeys)restoreDefaultsHotkey.Tag).IsTriggered())
+                RestoreDefaults();
         }
 
         private bool GetCameraOffsets()
@@ -120,7 +180,7 @@ namespace LoLCameraSharp
                 if (patternAddr == 0)
                     return false; //Pattern is out of date
 
-                YHeightAddress = (IntPtr)(patternAddr + 0x06);
+                CameraHeightAddress = (IntPtr)(patternAddr + 0x06);
 
                 patternAddr = p.FindPattern("\\xF3\\x0F\\x58\\x15\\x00\\x00\\x00\\x00\\xF3\\x0F\\x11\\x45\\xB8", "xxxx????xxxxx", ref m);
 
@@ -130,7 +190,7 @@ namespace LoLCameraSharp
                 patternAddr += 0x4;
                 pointerAddr = m.ReadUInt((IntPtr)patternAddr);
 
-                ViewDistanceAddress = (IntPtr)(pointerAddr + 0x10);
+                DrawDistanceAddress = (IntPtr)(pointerAddr + 0x10);
 
                 addressView.Lines = DisplayAddresses();
                 return true;
@@ -146,16 +206,41 @@ namespace LoLCameraSharp
             AddressDisplay.Add(string.Concat(new object[] { "Yaw: ", m.ReadFloat(YawAddress).ToString(), ",  Pitch: ", m.ReadFloat(PitchAddress).ToString() }));
             AddressDisplay.Add(string.Concat(new object[] { "X Position Address: ", XPositionAddress.ToString("X"), ",  Y Position Address: ", YPositionAddress.ToString("X") }));
             AddressDisplay.Add(string.Concat(new object[] { "X: ", m.ReadFloat(XPositionAddress).ToString(), ",  Y: ", m.ReadFloat(YPositionAddress).ToString() }));
-            AddressDisplay.Add(string.Concat(new object[] { "Camera Height Address: ", YHeightAddress.ToString("X"), ",  FoV Address: ", FoVAddress.ToString("X") }));
-            AddressDisplay.Add(string.Concat(new object[] { "Camera Height: ", m.ReadFloat(YHeightAddress).ToString(), ",  Field of View: ", m.ReadFloat(FoVAddress).ToString() }));
+            AddressDisplay.Add(string.Concat(new object[] { "Camera Height Address: ", CameraHeightAddress.ToString("X"), ",  FoV Address: ", FoVAddress.ToString("X") }));
+            AddressDisplay.Add(string.Concat(new object[] { "Camera Height: ", m.ReadFloat(CameraHeightAddress).ToString(), ",  Field of View: ", m.ReadFloat(FoVAddress).ToString() }));
             AddressDisplay.Add(string.Concat(new object[] { "Zoom Address: ", ZoomAddress.ToString("X"), ",  Value: ", m.ReadFloat(ZoomAddress).ToString() }));
-            AddressDisplay.Add(string.Concat(new object[] { "View Distance Address: ", ViewDistanceAddress.ToString("X"), ",  Value: ", m.ReadFloat(ViewDistanceAddress).ToString() }));
+            AddressDisplay.Add(string.Concat(new object[] { "View Distance Address: ", DrawDistanceAddress.ToString("X"), ",  Value: ", m.ReadFloat(DrawDistanceAddress).ToString() }));
+            AddressDisplay.Add(string.Concat(new object[] { "Camera Rotation Speed: ", speed.ToString() }));
 
             return AddressDisplay.ToArray();
         }
 
+        private void GetDefaultValues()
+        {
+            defaultPitch = pitch = m.ReadFloat(PitchAddress);
+            defaultYaw = yaw = m.ReadFloat(YawAddress);
+            defaultCameraHeight = cameraHeight = m.ReadFloat(CameraHeightAddress);
+            defaultDrawDistance = drawDistance = m.ReadFloat(DrawDistanceAddress);
+            speed = 25.0f;
+        }
+
+        private void RestoreDefaults()
+        {
+            m.WriteFloat(PitchAddress, defaultPitch);
+            m.WriteFloat(YawAddress, defaultYaw);
+            m.WriteFloat(CameraHeightAddress, defaultCameraHeight);
+            m.WriteFloat(DrawDistanceAddress, defaultDrawDistance);
+        }
+
         private void LoLCamera_Load(object sender, EventArgs e)
         {
+            IniFile = Directory.GetCurrentDirectory() + "\\cameraHotkeys.cfg";
+
+            if(!File.Exists(IniFile))
+                File.Create(IniFile).Dispose();
+
+            LoadHotkeys();
+
             //Search for game every second
             SearchForGame.Interval = 1000;
             SearchForGame.Tick += new EventHandler(this.FindGameTick);
@@ -166,16 +251,103 @@ namespace LoLCameraSharp
         }
 
         //Hotkey Handling:
-        private void textBox1_TextChanged(object sender, EventArgs e)
+        //Note: Saving & Loading, use ToString() and use Keys key = (Keys)Enum.Parse(typeof(Keys), key2.ToString());
+        private void HandleHotkey(object sender, EventArgs e)
         {
-            HotkeyBinding form = new HotkeyBinding(this);
+            HotkeyBinding form = new HotkeyBinding(this, (TextBox)sender);
             form.Visible = true;
             this.Visible = false;
         }
 
-        public void ProcessHotkey(Hotkeys hotkey, HotkeyBinding form)
+        #region INIHandling
+        private void SaveHotkeys()
+        {
+            IniParser parser = new IniParser(IniFile);
+
+            parser.AddSetting("Pitch", "IncreaseHotkey", pitchIncreaseHotkey.Text);
+            parser.AddSetting("Pitch", "DecreaseHotkey", pitchDecreaseHotkey.Text);
+
+            parser.AddSetting("Yaw", "IncreaseHotkey", yawIncreaseHotkey.Text);
+            parser.AddSetting("Yaw", "DecreaseHotkey", yawDecreaseHotkey.Text);
+
+            parser.AddSetting("Height", "IncreaseHotkey", cameraHeightIncreaseHotkey.Text);
+            parser.AddSetting("Height", "DecreaseHotkey", cameraHeightDecreaseHotkey.Text);
+
+            parser.AddSetting("Speed", "IncreaseHotkey", speedIncreaseHotkey.Text);
+            parser.AddSetting("Speed", "DecreaseHotkey", speedDecreaseHotkey.Text);
+
+            parser.AddSetting("ViewDistance", "IncreaseHotkey", drawDistanceIncreaseHotkey.Text);
+            parser.AddSetting("ViewDistance", "DecreaseHotkey", drawDistanceDecreaseHotkey.Text);
+
+            parser.AddSetting("RestoreDefaults", "Hotkey", restoreDefaultsHotkey.Text);
+
+            parser.SaveSettings();
+        }
+
+        private void LoadHotkeys()
+        {
+            IniParser parser = new IniParser(IniFile);
+
+            string hotkey;
+
+            hotkey = parser.GetSetting("Pitch", "IncreaseHotkey");
+            pitchIncreaseHotkey.Text = hotkey;
+            pitchIncreaseHotkey.Tag = parseSetting(hotkey);
+            hotkey = parser.GetSetting("Pitch", "DecreaseHotkey");
+            pitchDecreaseHotkey.Text = hotkey;
+            pitchDecreaseHotkey.Tag = parseSetting(hotkey);
+
+            hotkey = parser.GetSetting("Yaw", "IncreaseHotkey");
+            yawIncreaseHotkey.Text = hotkey;
+            yawIncreaseHotkey.Tag = parseSetting(hotkey);
+            hotkey = parser.GetSetting("Yaw", "DecreaseHotkey");
+            yawDecreaseHotkey.Text = hotkey;
+            yawDecreaseHotkey.Tag = parseSetting(hotkey);
+
+            hotkey = parser.GetSetting("Height", "IncreaseHotkey");
+            cameraHeightIncreaseHotkey.Text = hotkey;
+            cameraHeightIncreaseHotkey.Tag = parseSetting(hotkey);
+            hotkey = parser.GetSetting("Height", "DecreaseHotkey");
+            cameraHeightDecreaseHotkey.Text = hotkey;
+            cameraHeightDecreaseHotkey.Tag = parseSetting(hotkey);
+
+            hotkey = parser.GetSetting("Speed", "IncreaseHotkey");
+            speedIncreaseHotkey.Text = hotkey;
+            speedIncreaseHotkey.Tag = parseSetting(hotkey);
+            hotkey = parser.GetSetting("Speed", "DecreaseHotkey");
+            speedDecreaseHotkey.Text = hotkey;
+            speedDecreaseHotkey.Tag = parseSetting(hotkey);
+
+            hotkey = parser.GetSetting("ViewDistance", "IncreaseHotkey");
+            drawDistanceIncreaseHotkey.Text = hotkey;
+            drawDistanceIncreaseHotkey.Tag = parseSetting(hotkey);
+            hotkey = parser.GetSetting("ViewDistance", "DecreaseHotkey");
+            drawDistanceDecreaseHotkey.Text = hotkey;
+            drawDistanceDecreaseHotkey.Tag = parseSetting(hotkey);
+
+            hotkey = parser.GetSetting("RestoreDefaults", "Hotkey");
+            restoreDefaultsHotkey.Text = hotkey;
+            restoreDefaultsHotkey.Tag = parseSetting(hotkey);
+        }
+        #endregion
+
+        private Hotkeys parseSetting(string setting)
+        {
+            try
+            {
+                string[] keys = setting.Split(',');
+                return new Hotkeys((Keys)Enum.Parse(typeof(Keys), keys[0]), (Keys)Enum.Parse(typeof(Keys), keys[1]));
+            }catch{
+                return new Hotkeys();
+            }
+        }
+
+        public void ProcessHotkey(Hotkeys hotkey, HotkeyBinding form, TextBox textBox)
         {
             form.Close();
+            textBox.Text = hotkey.subKey.ToString() + "," + hotkey.mainKey.ToString();
+            textBox.Tag = hotkey;
+            SaveHotkeys();
             this.Visible = true;
         }
         public void CancelHotkey(HotkeyBinding form)

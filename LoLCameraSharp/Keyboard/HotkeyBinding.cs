@@ -13,11 +13,19 @@ namespace LoLCameraSharp.Keyboard
     {
         Hotkeys hotkey = new Hotkeys();
         LoLCamera parentForm;
+        TextBox textBox;
 
         public HotkeyBinding(LoLCamera parent)
         {
             InitializeComponent();
             parentForm = parent;
+        }
+
+        public HotkeyBinding(LoLCamera parent, TextBox textBox)
+        {
+            InitializeComponent();
+            parentForm = parent;
+            this.textBox = textBox;
         }
 
         private void btnClear_Click(object sender, EventArgs e)
@@ -47,7 +55,7 @@ namespace LoLCameraSharp.Keyboard
 
         private void btnConfirmHotkey_Click(object sender, EventArgs e)
         {
-            parentForm.ProcessHotkey(hotkey, this);
+            parentForm.ProcessHotkey(hotkey, this, textBox);
         }
 
         private void btnCancel_Click(object sender, EventArgs e)

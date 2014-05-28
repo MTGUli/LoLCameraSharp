@@ -85,6 +85,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(HandleInput);
             this.Name = "HotkeyBinding";
             this.Text = "Bind a Hotkey";
             this.Load += new System.EventHandler(this.HotkeyBinding_Load);
