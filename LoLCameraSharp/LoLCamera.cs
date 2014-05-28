@@ -33,6 +33,7 @@ namespace LoLCameraSharp
 
         //General Global Vars
         bool PatternsFound = false;
+        Stopwatch timer = new Stopwatch();
 
         public LoLCamera()
         {
@@ -55,8 +56,9 @@ namespace LoLCameraSharp
 
             if (m.gameFound && PatternsFound)
             {
-                UpdateCamera.Enabled = true;
                 SearchForGame.Enabled = false;
+                timer.Restart();
+                UpdateCamera.Enabled = true;
             }
         }
 
@@ -67,7 +69,8 @@ namespace LoLCameraSharp
                 if (tabControlView.SelectedTab == tabDebug)
                     addressView.Lines = DisplayAddresses();
 
-                HandleCamera(0.0f);
+                HandleCamera((float)(timer.Elapsed.TotalMilliseconds / 1000f));
+                timer.Restart();
             }
             else
             {
