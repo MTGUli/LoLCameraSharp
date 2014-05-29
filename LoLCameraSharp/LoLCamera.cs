@@ -226,6 +226,10 @@ namespace LoLCameraSharp
 
         private void RestoreDefaults()
         {
+            pitch = defaultPitch;
+            yaw = defaultYaw;
+            cameraHeight = defaultCameraHeight;
+            drawDistance = defaultDrawDistance;
             m.WriteFloat(PitchAddress, defaultPitch);
             m.WriteFloat(YawAddress, defaultYaw);
             m.WriteFloat(CameraHeightAddress, defaultCameraHeight);
