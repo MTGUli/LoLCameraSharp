@@ -30,6 +30,7 @@ namespace LoLCameraSharp
         IntPtr YPositionAddress;
         IntPtr ZoomAddress;
         IntPtr DrawDistanceAddress;
+        IntPtr CameraModeAddress;
 
         //Timer Ticks:
         Timer UpdateCamera = new Timer();
@@ -42,8 +43,17 @@ namespace LoLCameraSharp
         float defaultCameraHeight, cameraHeight = 0f;
         float defaultDrawDistance, drawDistance = 0f;
         float speed = 25.0f;
+        byte defaultCameraMode, cameraMode = 0;
         Stopwatch deltaTime = new Stopwatch();
         string IniFile;
+
+        enum HudCameraMode 
+        { 
+            Default = 0x0, 
+            FPSCamera = 0x1, 
+            ThirdPersonCamera = 0x2, 
+            FocusCamera = 0x3, 
+        };
 
         public LoLCamera()
         {
@@ -94,6 +104,7 @@ namespace LoLCameraSharp
 
         private void HandleCamera(float deltaTime)
         {
+            m.WriteBytes(CameraModeAddress, BitConverter.GetBytes(0x00));
             // Check Hotkeys for key presses and adjust camera accordingly, get mouse location etc!
             if (((Hotkeys)pitchIncreaseHotkey.Tag).IsTriggered())
             {
@@ -174,6 +185,7 @@ namespace LoLCameraSharp
                 YPositionAddress = (IntPtr)(pointerAddr + 0x10C);
                 XPositionAddress = (IntPtr)(pointerAddr + 0x104);
                 ZoomAddress = (IntPtr)(pointerAddr + 0x1BC);
+                CameraModeAddress = (IntPtr)(pointerAddr + 0x1C0);
 
                 patternAddr = p.FindPattern("\\xC7\\x87\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\xE8\\x00\\x00\\x00\\x00\\x8B\\x87\\x00\\x00\\x00\\x00\\x8D\\x8F\\x00\\x00\\x00\\x00\\x89\\x45\\xCC", "xx????????x????xx????xx????xxx", ref m);
                 
@@ -211,6 +223,7 @@ namespace LoLCameraSharp
             AddressDisplay.Add(string.Concat(new object[] { "Zoom Address: ", ZoomAddress.ToString("X"), ",  Value: ", m.ReadFloat(ZoomAddress).ToString() }));
             AddressDisplay.Add(string.Concat(new object[] { "View Distance Address: ", DrawDistanceAddress.ToString("X"), ",  Value: ", m.ReadFloat(DrawDistanceAddress).ToString() }));
             AddressDisplay.Add(string.Concat(new object[] { "Camera Rotation Speed: ", speed.ToString() }));
+            AddressDisplay.Add(string.Concat(new object[] { "Camera Mode: ", cameraMode.ToString("X") }));
 
             return AddressDisplay.ToArray();
         }
@@ -221,6 +234,7 @@ namespace LoLCameraSharp
             defaultYaw = yaw = m.ReadFloat(YawAddress);
             defaultCameraHeight = cameraHeight = m.ReadFloat(CameraHeightAddress);
             defaultDrawDistance = drawDistance = m.ReadFloat(DrawDistanceAddress);
+            defaultCameraMode = cameraMode = m.ReadBytes(CameraModeAddress, 1)[0];
             speed = 25.0f;
         }
 
@@ -234,6 +248,7 @@ namespace LoLCameraSharp
             m.WriteFloat(YawAddress, defaultYaw);
             m.WriteFloat(CameraHeightAddress, defaultCameraHeight);
             m.WriteFloat(DrawDistanceAddress, defaultDrawDistance);
+            m.WriteBytes(CameraModeAddress, BitConverter.GetBytes(defaultCameraMode));
         }
 
         private void LoLCamera_Load(object sender, EventArgs e)
