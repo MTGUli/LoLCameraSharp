@@ -13,6 +13,20 @@ namespace LoLCameraSharp.MemoryFunctions
         const int PROCESS_WM_READ = 0x0010;
         const int PROCESS_VM_WRITE = 0x0020;
         const int PROCESS_VM_OPERATION = 0x0008;
+
+        public enum Protection : uint
+        {
+            PAGE_NOACCESS = 0x01,
+            PAGE_READONLY = 0x02,
+            PAGE_READWRITE = 0x04,
+            PAGE_WRITECOPY = 0x08,
+            PAGE_EXECUTE = 0x10,
+            PAGE_EXECUTE_READ = 0x20,
+            PAGE_EXECUTE_READWRITE = 0x40,
+            PAGE_EXECUTE_WRITECOPY = 0x80,
+            PAGE_GUARD = 0x100,
+            PAGE_NOCACHE = 0x200,
+        }
         #endregion
 
         #region Imports
@@ -26,6 +40,14 @@ namespace LoLCameraSharp.MemoryFunctions
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool WriteProcessMemory(int hProcess, int lpBaseAddress,
           byte[] lpBuffer, int dwSize, ref int lpNumberOfBytesWritten);
+
+        [DllImport("kernel32.dll")]
+        public static extern bool VirtualProtectEx(
+            IntPtr hProcess,
+            uint dwAddress, //IntPtr lpAddress,
+            int nSize,      //UIntPtr dwSize,
+            uint flNewProtect,
+            out uint lpflOldProtect);
         #endregion
 
         #region Public & Private Vars
@@ -109,6 +131,14 @@ namespace LoLCameraSharp.MemoryFunctions
         {
             int bytesWritten = 0;
             _gameFound = WriteProcessMemory((int)_processHandle, (int)address, buffer, buffer.Length, ref bytesWritten);
+        }
+
+        public bool WriteProtectedMemory(IntPtr address, int size, uint flNewProtect, uint lpflOldProtect)
+        {
+            if (!VirtualProtectEx(_processHandle, (uint)address, size, flNewProtect, out lpflOldProtect))
+                return true;
+
+            return false;
         }
         #endregion
     }
