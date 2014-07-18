@@ -17,7 +17,10 @@ namespace LoLCameraSharp.MemoryFunctions
         {
             byte[] data = m.ReadBytes(m.baseModule, m.moduleSize);
             byte[] patternBytes = GetBytesFromPattern(pattern);
-            return (uint)m.baseModule + Find(data, mask, patternBytes);
+            uint offset = Find(data, mask, patternBytes);
+            if (offset == 0)
+                return 0;
+            return (uint)m.baseModule + offset;
         }
 
         private static byte[] GetBytesFromPattern(string pattern)

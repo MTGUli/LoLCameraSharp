@@ -105,10 +105,6 @@ namespace LoLCameraSharp
 
         private void HandleCamera(float deltaTime)
         {
-            //m.WriteBytes(CameraModeAddress, new Byte[] {0x00});
-            //m.WriteFloat(MaxZoomAddress, 5000.0f); //Override Max Zoom
-            //m.WriteFloat(ZoomAddress, 3000); //Desired Zoom
-            //m.WriteFloat(ZoomAddress - 0x04, 3000); //Current Zoom
             // Check Hotkeys for key presses and adjust camera accordingly, get mouse location etc!
             if (((Hotkeys)pitchIncreaseHotkey.Tag).IsTriggered())
             {
@@ -198,12 +194,11 @@ namespace LoLCameraSharp
 
                 CameraHeightAddress = (IntPtr)(patternAddr + 0x06);
 
-                patternAddr = p.FindPattern("\\xF3\\x0F\\x58\\x15\\x00\\x00\\x00\\x00\\xF3\\x0F\\x11\\x45\\xB8", "xxxx????xxxxx", ref m);
-
+                patternAddr = p.FindPattern("\\x68\\x00\\x00\\x00\\x00\\xE8\\x00\\x00\\x00\\x00\\x8B\\x0D\\x00\\x00\\x00\\x00\\x85\\xC9\\x75\\x27", "x????x????xx????xxxx", ref m);
                 if (patternAddr == 0)
                     return false; //Pattern is out of date
 
-                patternAddr += 0x4;
+                patternAddr += 0x1;
                 pointerAddr = m.ReadUInt((IntPtr)patternAddr);
 
                 DrawDistanceAddress = (IntPtr)(pointerAddr + 0x10);
@@ -216,7 +211,6 @@ namespace LoLCameraSharp
                 MaxZoomAddress = (IntPtr)m.ReadUInt((IntPtr)patternAddr + 0x04);
                 //Unprotect the MaxZoom Address
                 m.WriteProtectedMemory(MaxZoomAddress, 0x04, (uint)MemoryEditor.Protection.PAGE_EXECUTE_READWRITE, (uint)MemoryEditor.Protection.PAGE_READONLY);
-                addressView.Lines = DisplayAddresses();
                 return true;
             }
             return false;
