@@ -164,7 +164,8 @@ namespace LoLCameraSharp
             //Sanity Check
             if (m.gameFound)
             {
-                uint patternAddr = p.FindPattern("\\xA1\\x00\\x00\\x00\\x00\\x83\\xC4\\x14\\x8B\\x00\\x8B\\x0D\\x00\\x00\\x00\\x00\\xD9\\x80\\x00\\x00\\x00\\x00", "x????xxxxxxx????xx????", ref m);
+                //uint patternAddr = p.FindPattern("\\xA1\\x00\\x00\\x00\\x00\\x83\\xC4\\x14\\x8B\\x00\\x8B\\x0D\\x00\\x00\\x00\\x00\\xD9\\x80\\x00\\x00\\x00\\x00", "x????xxxxxxx????xx????", ref m);
+                uint patternAddr = p.FindPattern("\\xA1\\x00\\x00\\x00\\x00\\x8B\\x48\\x14\\x83\\xC1\\x78", "x????xxxxxx", ref m);
 
                 if (patternAddr == 0)
                     return false; //Pattern is out of date
@@ -194,14 +195,14 @@ namespace LoLCameraSharp
 
                 CameraHeightAddress = (IntPtr)(patternAddr + 0x06);
 
-                patternAddr = p.FindPattern("\\x68\\x00\\x00\\x00\\x00\\xE8\\x00\\x00\\x00\\x00\\x8B\\x0D\\x00\\x00\\x00\\x00\\x85\\xC9\\x75\\x27", "x????x????xx????xxxx", ref m);
+                /*patternAddr = p.FindPattern("\\x68\\x00\\x00\\x00\\x00\\xE8\\x00\\x00\\x00\\x00\\x8B\\x0D\\x00\\x00\\x00\\x00\\x85\\xC9\\x75\\x27", "x????x????xx????xxxx", ref m);
                 if (patternAddr == 0)
                     return false; //Pattern is out of date
 
                 patternAddr += 0x1;
                 pointerAddr = m.ReadUInt((IntPtr)patternAddr);
 
-                DrawDistanceAddress = (IntPtr)(pointerAddr + 0x10);
+                DrawDistanceAddress = (IntPtr)(pointerAddr + 0x10);*/
 
                 //Max Zoom Out
                 patternAddr = p.FindPattern("\\xF3\\x0F\\x10\\x0D\\x00\\x00\\x00\\x00\\x0F\\x2F\\xC1\\x77\\x0D\\xF3\\x0F\\x10\\x0D\\x00\\x00\\x00\\x00", "xxxx????xxxxxxxxx????", ref m);
